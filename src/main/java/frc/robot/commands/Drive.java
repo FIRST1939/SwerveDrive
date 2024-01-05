@@ -29,6 +29,8 @@ public class Drive extends CommandBase {
         desiredTranslations[1] *= maxLinear;
 
         double desiredRotation = -MathUtils.inputTransform(-this.xboxController.getRightX()) * Constants.SwerveModuleConstants.MAX_ANGULAR_VELOCITY;
+        desiredTranslations[0] *= (1 - this.xboxController.getLeftTriggerAxis());
+        desiredTranslations[1] *= (1 - this.xboxController.getLeftTriggerAxis());
 
         this.swerveDrive.drive(
             desiredTranslations[0],
