@@ -23,22 +23,28 @@ public class Drive extends CommandBase {
     @Override
     public void execute () {
 
-        double desiredTranslations[] = MathUtils.inputTransform(-xboxController.getLeftY(), this.xboxController.getLeftX());
-        double maxLinear = Constants.SwerveModuleConstants.MAX_VELOCITY;
-        desiredTranslations[0] *= maxLinear;
-        desiredTranslations[1] *= maxLinear;
+        if (!this.xboxController.getRightBumper()) {
 
-        double desiredRotation = -MathUtils.inputTransform(-this.xboxController.getRightX()) * Constants.SwerveModuleConstants.MAX_ANGULAR_VELOCITY;
-        desiredTranslations[0] *= (1 - this.xboxController.getLeftTriggerAxis());
-        desiredTranslations[1] *= (1 - this.xboxController.getLeftTriggerAxis());
+            double desiredTranslations[] = MathUtils.inputTransform(-xboxController.getLeftY(), this.xboxController.getLeftX());
+            double maxLinear = Constants.SwerveModuleConstants.MAX_VELOCITY;
+            desiredTranslations[0] *= maxLinear;
+            desiredTranslations[1] *= maxLinear;
 
-        this.swerveDrive.drive(
-            desiredTranslations[0],
-            desiredTranslations[1],
-            desiredRotation,
-            this.fieldOrient,
-            true
-        );
+            double desiredRotation = -MathUtils.inputTransform(-this.xboxController.getRightX()) * Constants.SwerveModuleConstants.MAX_ANGULAR_VELOCITY;
+            desiredTranslations[0] *= (1 - this.xboxController.getLeftTriggerAxis());
+            desiredTranslations[1] *= (1 - this.xboxController.getLeftTriggerAxis());
+
+            this.swerveDrive.drive(
+                desiredTranslations[0],
+                desiredTranslations[1],
+                desiredRotation,
+                this.fieldOrient,
+                true
+            );
+        } else {
+
+            this.swerveDrive.setModuleStates(Constants.SwerveModuleConstants.LOCKED_WHEELS);
+        }
     }
 
     @Override
