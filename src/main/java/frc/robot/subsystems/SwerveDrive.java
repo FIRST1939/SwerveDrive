@@ -91,19 +91,19 @@ public class SwerveDrive extends SubsystemBase {
 
         this.swerveDriveOdometry = new SwerveDriveOdometry(
                 Constants.SwerveModuleConstants.SWERVE_DRIVE_KINEMATICS,
-                Rotation2d.fromDegrees(this.navX.getYaw()),
+                this.navX.getRotation2d(),
                 this.getModulePositions());
 
         this.autoOdometry = new SwerveDriveOdometry(
                 Constants.SwerveModuleConstants.SWERVE_DRIVE_KINEMATICS,
-                Rotation2d.fromDegrees(this.navX.getYaw()),
+                this.navX.getRotation2d(),
                 this.getModulePositions());
 
         this.maintainAngleTimer.reset();
         this.maintainAngleTimer.start();
         this.maintainAnglePID.enableContinuousInput(-Math.PI, Math.PI);
 
-        this.swerveDriveOdometry.resetPosition(Rotation2d.fromDegrees(this.navX.getYaw()), this.getModulePositions(), new Pose2d());
+        this.swerveDriveOdometry.resetPosition(this.navX.getRotation2d(), this.getModulePositions(), new Pose2d());
         this.navX.reset();
         this.navX.calibrate();
     }
@@ -138,7 +138,7 @@ public class SwerveDrive extends SubsystemBase {
         if (fieldRelative) {
 
             this.setModuleStates(
-                    ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rotation, Rotation2d.fromDegrees(this.navX.getYaw())));
+                    ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rotation, this.navX.getRotation2d()));
         } else {
 
             this.setModuleStates(new ChassisSpeeds(xSpeed, ySpeed, rotation));
@@ -235,16 +235,16 @@ public class SwerveDrive extends SubsystemBase {
 
     public void updateOdometry () {
 
-        this.swerveDriveOdometry.update(Rotation2d.fromDegrees(this.navX.getYaw()), this.getModulePositions());
+        this.swerveDriveOdometry.update(this.navX.getRotation2d(), this.getModulePositions());
     }
 
     public void updateAutoOdometry () {
 
-        this.autoOdometry.update(Rotation2d.fromDegrees(this.navX.getYaw()), this.getModulePositions());
+        this.autoOdometry.update(this.navX.getRotation2d(), this.getModulePositions());
     }
 
     public Rotation2d getGyro () {
-        return Rotation2d.fromDegrees(this.navX.getYaw());
+        return this.navX.getRotation2d();
     }
 
     public Pose2d getPose () {
@@ -293,13 +293,13 @@ public class SwerveDrive extends SubsystemBase {
         this.navX.setAngleAdjustment(pose.getRotation().getDegrees());
 
         this.updateMaintainAngle();
-        this.swerveDriveOdometry.resetPosition(Rotation2d.fromDegrees(this.navX.getYaw()).times(-1.0), this.getModulePositions(), pose);
-        this.autoOdometry.resetPosition(Rotation2d.fromDegrees(this.navX.getYaw()).times(-1.0), this.getModulePositions(), pose);
+        this.swerveDriveOdometry.resetPosition(this.navX.getRotation2d().times(-1.0), this.getModulePositions(), pose);
+        this.autoOdometry.resetPosition(this.navX.getRotation2d().times(-1.0), this.getModulePositions(), pose);
     }
 
     public void setPose (Pose2d pose) {
 
-        this.swerveDriveOdometry.resetPosition(Rotation2d.fromDegrees(this.navX.getYaw()).times(-1.0), this.getModulePositions(), pose);
+        this.swerveDriveOdometry.resetPosition(this.navX.getRotation2d().times(-1.0), this.getModulePositions(), pose);
     }
 
     public void resetOdometry (Rotation2d angle) {
@@ -310,7 +310,7 @@ public class SwerveDrive extends SubsystemBase {
         Pose2d pose = new Pose2d(getPose().getTranslation(), angle);
         this.updateMaintainAngle();
 
-        this.swerveDriveOdometry.resetPosition(Rotation2d.fromDegrees(this.navX.getYaw()).times(-1.0), this.getModulePositions(), pose);
+        this.swerveDriveOdometry.resetPosition(this.navX.getRotation2d().times(-1.0), this.getModulePositions(), pose);
     }
 
     public ChassisSpeeds getChassisSpeed () {
