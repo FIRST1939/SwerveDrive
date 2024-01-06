@@ -54,8 +54,8 @@ public final class Constants {
         public static final ModuleConfiguration MODULE_CONFIGURATION = SdsModuleConfigurations.MK4I_L3;
         public static final double VELOCITY_FACTOR = MODULE_CONFIGURATION.getDriveReduction() / 60.0 * MODULE_CONFIGURATION.getWheelDiameter() * Math.PI;
 
-        public static final double WHEELBASE_WIDTH = 0.55245;
-        public static final double WHEELBASE_LENGTH = 0.55245;
+        public static final double WHEELBASE_WIDTH = 0.5588;
+        public static final double WHEELBASE_LENGTH = 0.5588;
 
         public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
             new Translation2d(WHEELBASE_LENGTH / 2, -WHEELBASE_WIDTH / 2),

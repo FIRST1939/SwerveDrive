@@ -6,7 +6,6 @@ package frc.robot;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.Map;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.PathPlanner;
@@ -14,17 +13,11 @@ import com.pathplanner.lib.auto.PIDConstants;
 import com.pathplanner.lib.auto.SwerveAutoBuilder;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.util.sendable.Sendable;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -49,8 +42,7 @@ public class RobotContainer {
   private final AHRS navX = new AHRS(Port.kMXP);
   private final Limelight limelight = new Limelight("limelight");
 
-  private final Field2d field2d = new Field2d();
-  private final SwerveDrive swerveDrive = new SwerveDrive(navX, field2d);
+  private final SwerveDrive swerveDrive = new SwerveDrive(navX);
 
   private SendableChooser<Command> autoChooser = new SendableChooser<>();
   private File[] autoPathFiles = new File(Filesystem.getDeployDirectory(), "pathplanner/").listFiles();
@@ -73,7 +65,7 @@ public class RobotContainer {
   public RobotContainer() {
 
     this.configureButtonBindings();
-    this.configureDashboard();
+    this.configureAutoChooser();
 
     this.swerveDrive.setDefaultCommand(new Drive(this.swerveDrive, this.driverOneController));
   }
@@ -91,7 +83,7 @@ public class RobotContainer {
     new POVButton(this.driverOneController, 0).onTrue(new InstantCommand(() -> this.swerveDrive.resetOdometry(new Pose2d())));
   }
 
-  private void configureDashboard () {
+  private void configureAutoChooser () {
 
     this.autoChooser.setDefaultOption("Do Nothing", new WaitCommand(1.0));
 
@@ -106,39 +98,8 @@ public class RobotContainer {
       }
     }
 
-    Shuffleboard.getTab("Autonomous").addPersistent("Autonomous Selector", this.autoChooser).withWidget("ComboBox Chooser");
-    Shuffleboard.getTab("Autonomous").add(this.field2d).withWidget("Field").withProperties(Map.of("robot_width", 0.83566, "robot_length", 0.83566));
-
-    Shuffleboard.getTab("Teleoperated").add("NavX", this.navX).withWidget("Gyro");
-    Shuffleboard.getTab("Teleoperated").add("Swerve Drive", new Sendable() {
-        
-        @Override
-        public void initSendable (SendableBuilder sendableBuilder) {
-
-            sendableBuilder.setSmartDashboardType("SwerveDrive");
-            SwerveModuleState[] swerveModuleStates = swerveDrive.getModuleStates();
-
-            sendableBuilder.addDoubleProperty("Front Left Angle", () -> swerveModuleStates[0].angle.getDegrees(), null);
-            sendableBuilder.addDoubleProperty("Front Left Velocity", () -> swerveModuleStates[0].speedMetersPerSecond, null);
-
-            sendableBuilder.addDoubleProperty("Front Right Angle", () -> swerveModuleStates[1].angle.getDegrees(), null);
-            sendableBuilder.addDoubleProperty("Front Right Velocity", () -> swerveModuleStates[1].speedMetersPerSecond, null);
-
-            sendableBuilder.addDoubleProperty("Back Left Angle", () -> swerveModuleStates[2].angle.getDegrees(), null);
-            sendableBuilder.addDoubleProperty("Back Left Velocity", () -> swerveModuleStates[2].speedMetersPerSecond, null);
-
-            sendableBuilder.addDoubleProperty("Back Right Angle", () -> swerveModuleStates[3].angle.getDegrees(), null);
-            sendableBuilder.addDoubleProperty("Back Right Velocity", () -> swerveModuleStates[3].speedMetersPerSecond, null);
-
-            sendableBuilder.addDoubleProperty("Robot Angle", () -> navX.getRotation2d().getDegrees(), null);
-        }
-    });
+    SmartDashboard.putData(this.autoChooser);
   }
 
   public Command getAutonomousCommand() { return this.autoChooser.getSelected(); }
-  public void updateTrajectory () { 
-    
-    Trajectory trajectory = PathPlanner.loadPath(this.autoChooser.getSelected().getName(), 4.0, 2.75);
-    this.field2d.getObject("Trajectory").setTrajectory(trajectory);
-  }
 }
