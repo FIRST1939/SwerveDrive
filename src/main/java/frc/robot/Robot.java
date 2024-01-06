@@ -41,7 +41,14 @@ public class Robot extends TimedRobot {
   public void disabledInit () {}
 
   @Override
-  public void disabledPeriodic () {}
+  public void disabledPeriodic () {
+
+    if (this.m_robotContainer.getAutonomousCommand() != this.m_autonomousCommand) {
+
+        this.m_autonomousCommand = this.m_robotContainer.getAutonomousCommand();
+        this.m_robotContainer.updateTrajectory();
+    }
+  }
 
   @Override
   public void autonomousInit () {

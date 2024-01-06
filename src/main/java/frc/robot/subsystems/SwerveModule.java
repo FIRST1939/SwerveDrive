@@ -9,7 +9,6 @@ import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -26,15 +25,7 @@ public class SwerveModule {
     private final RelativeEncoder steerEncoder;
     private double referenceAngle = 0.0;
 
-    private final PIDController drivePIDController;
     private SimpleMotorFeedforward driveFeedForward;
-  
-    private final PIDController steerPIDController = new PIDController(
-        Constants.SwerveModuleConstants.STEER_PID[0],
-        Constants.SwerveModuleConstants.STEER_PID[1],
-        Constants.SwerveModuleConstants.STEER_PID[2]
-    );
-  
     private final SparkMaxPIDController motorSteeringPID;
     private final SparkMaxPIDController motorDrivingPID;
 
@@ -81,9 +72,6 @@ public class SwerveModule {
             Constants.SwerveModuleConstants.DRIVE_CONTROLLER[0],
             Constants.SwerveModuleConstants.DRIVE_CONTROLLER[1]
         );
-
-        this.drivePIDController = new PIDController(Constants.SwerveModuleConstants.DRIVE_CONTROLLER[2], 0.0, 0.0);
-        this.steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     public SwerveModuleState getState () {
@@ -100,12 +88,9 @@ public class SwerveModule {
         
       SwerveModuleState swerveModuleState = SwerveModuleState.optimize(desiredState, new Rotation2d(this.getTurnEncoder()));
 
-      //final double driveOutput = m_drivePIDController.calculate(m_driveEncoder.getVelocity(), state.speedMetersPerSecond);
       final double driveFF = this.driveFeedForward.calculate(swerveModuleState.speedMetersPerSecond);
       this.motorDrivingPID.setReference(swerveModuleState.speedMetersPerSecond, ControlType.kVelocity, 0, driveFF * 12.6);
-      
-      final double steerOutput = this.steerPIDController.calculate(this.getTurnEncoder(), swerveModuleState.angle.getRadians());
-      this.steerMotor.set(steerOutput);
+      this.motorSteeringPID.setReference(swerveModuleState.angle.getRadians(), ControlType.kPosition);
     }
   
     public void setBrake (boolean brake) {

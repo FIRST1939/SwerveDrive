@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.kauailabs.navx.frc.AHRS;
@@ -19,6 +20,9 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -56,6 +60,7 @@ public class SwerveDrive extends SubsystemBase {
             Constants.SwerveModuleConstants.BACK_RIGHT_MODULE_ENCODER_OFFSET);
 
     private AHRS navX;
+    private Field2d field2d;
     private final SwerveDriveOdometry swerveDriveOdometry;
     private final SwerveDriveOdometry autoOdometry;
 
@@ -66,7 +71,7 @@ public class SwerveDrive extends SubsystemBase {
     private SwerveModuleState[] desiredModuleStates = Constants.SwerveModuleConstants.SWERVE_DRIVE_KINEMATICS
             .toSwerveModuleStates(new ChassisSpeeds(0.0, 0.0, 0.0));
 
-    public SwerveDrive (AHRS navX) {
+    public SwerveDrive (AHRS navX, Field2d field2d) {
 
         this.navX = navX;
 
@@ -83,6 +88,35 @@ public class SwerveDrive extends SubsystemBase {
         this.swerveDriveOdometry.resetPosition(this.navX.getRotation2d(), this.getModulePositions(), new Pose2d());
         this.navX.reset();
         this.navX.calibrate();
+
+        this.configureDashboard();
+    }
+
+    public void configureDashboard () {
+
+        Shuffleboard.getTab("Teleoperated").addDouble("Speed [m/s]", () -> {
+
+            double xVelocity = this.getChassisSpeed().vxMetersPerSecond;
+            double yVelocity = this.getChassisSpeed().vyMetersPerSecond;
+
+            double speed = Math.sqrt(Math.pow(xVelocity, 2) + Math.pow(yVelocity, 2));
+            return speed;
+        }).withWidget("Number Bar").withProperties(Map.of(
+            "min_value", 0.0, 
+            "max_value", Constants.SwerveModuleConstants.MAX_VELOCITY
+        ));
+
+        Shuffleboard.getTab("Teleoperated").addDouble("Acceleration [m/s^2]", () -> {
+
+            double xAcceleration = this.getChassisAccelerations().ax;
+            double yAcceleration = this.getChassisAccelerations().ay;
+
+            double acceleration = Math.sqrt(Math.pow(xAcceleration, 2) + Math.pow(yAcceleration, 2));
+            return acceleration;
+        }).withWidget("Number Bar").withProperties(Map.of(
+            "min_value", 0.0, 
+            "max_value", Constants.SwerveModuleConstants.MAX_ACCELERATION
+        ));
     }
 
     public void drive (double xSpeed, double ySpeed, double rotation, boolean fieldRelative, boolean keepAngle) {
@@ -119,19 +153,15 @@ public class SwerveDrive extends SubsystemBase {
         this.driveAccelerations = new ChassisAccelerations(this.getChassisSpeed(), this.lastDriveSpeed, 0.020);
         this.lastDriveSpeed = this.getChassisSpeed();
 
-        double xSpeed = this.getChassisSpeed().vxMetersPerSecond;
-        double ySpeed = this.getChassisSpeed().vyMetersPerSecond;
+        if (DriverStation.isTeleop()) {
+            
+            this.updateOdometry();
+            this.field2d.setRobotPose(this.getPose());
+        } else if (DriverStation.isAutonomous()) {
 
-        double speed = Math.sqrt(Math.pow(xSpeed, 2) + Math.pow(ySpeed, 2));
-        SmartDashboard.putNumber("Speed [m/s]", speed);
-
-        SmartDashboard.putNumber("Front Left Encoder", this.frontLeftModule.getTurnEncoder());
-        SmartDashboard.putNumber("Front Right Encoder", this.frontRightModule.getTurnEncoder());
-        SmartDashboard.putNumber("Back Left Encoder", this.backLeftModule.getTurnEncoder());
-        SmartDashboard.putNumber("Back Right Encoder", this.backRightModule.getTurnEncoder());
-
-        this.updateOdometry();
-        this.getPose();
+            this.updateAutoOdometry();
+            this.field2d.setRobotPose(this.getAutoPose());
+        }
     }
 
     public void setModuleStates (SwerveModuleState[] desiredModuleStates) {
@@ -297,6 +327,16 @@ public class SwerveDrive extends SubsystemBase {
                 this.frontRightModule.getPosition(),
                 this.backLeftModule.getPosition(),
                 this.backRightModule.getPosition()
+        };
+    }
+
+    public SwerveModuleState[] getModuleStates () {
+
+        return new SwerveModuleState[] {
+            this.frontLeftModule.getState(),
+            this.frontRightModule.getState(),
+            this.backLeftModule.getState(),
+            this.backRightModule.getState()
         };
     }
 
